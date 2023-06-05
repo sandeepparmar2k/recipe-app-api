@@ -9,7 +9,7 @@ from recipe import serializers
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """" view for manage recipe APIs. """
+    """ view for manage recipe APIs. """
     serializer_class = serializers.RecipeDetailSerializer
     queryset = Recipe.objects.all()
     authentication_classes = [TokenAuthentication]
