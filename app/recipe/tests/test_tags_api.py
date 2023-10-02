@@ -13,12 +13,12 @@ from core.models import Tag
 from recipe.serializers import TagSerializer
 
 
-Tags_URL = reverse('recipe:tag-list')
+TAGS_URL = reverse('recipe:tag-list')
 
 
 def detail_url(tag_id):
     """ create and return a tag details url """
-    return reverse('recipe:tag-details', args=[tag_id])
+    return reverse('recipe:tag-detail', args=[tag_id])
 
 
 def create_user(email='user@example.com', password='testpass123'):
@@ -34,7 +34,7 @@ class PublicTagsApiTests(TestCase):
 
     def test_auth_require(self):
         """ Test auth is required for retriving tags. """
-        res = self.client.get(Tags_URL)
+        res = self.client.get(TAGS_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -52,7 +52,7 @@ class PrivateTagsApiTests(TestCase):
         Tag.objects.create(user=self.user, name="Vegan")
         Tag.objects.create(user=self.user, name="Dessert")
 
-        res = self.client.get(Tags_URL)
+        res = self.client.get(TAGS_URL)
 
         tags = Tag.objects.all().order_by('-name')
         serializer = TagSerializer(tags, many=True)
@@ -65,7 +65,7 @@ class PrivateTagsApiTests(TestCase):
         Tag.objects.create(user=user2, name='Fruity')
         tag = Tag.objects.create(user=self.user, name='comfort food')
 
-        res = self.client.get(Tags_URL)
+        res = self.client.get(TAGS_URL)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]['name'], tag.name)
@@ -83,3 +83,13 @@ class PrivateTagsApiTests(TestCase):
         tag.refresh_from_db()
         self.assertEqual(tag.name, payload['name'])
 
+    def test_delete_tag(self):
+        """ test_delete a tag """
+        tag = Tag.objects.create(user=self.user, name='Breakfast')
+
+        url = detail_url(tag.id)
+        res = self.client.delete(url)
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        tags = Tag.objects.filter(user=self.user)
+        self.assertFalse(tags.exists())
